@@ -1,0 +1,765 @@
+<title>Liga El Dorado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+<style>
+  /* Tokens tomados del sistema de variables de Figma (colección Tokens · modo Light) */
+  :root {
+    color-scheme: light;
+    --bg: #FFFFFF;
+    --bg-2: #FAFAF9;
+    --bg-3: #F5F5F4;
+    --inverse: #0C0A09;
+    --brand: #EDD478;
+    --brand-hover: #E6C14A;
+    --brand-pressed: #DCA82A;
+    --brand-subtle: #FCF9EA;
+    --brand-text: #9B611C;
+    --focus: #DCA82A;
+    --text: #0C0A09;
+    --text-2: #57534E;
+    --text-3: #A8A29E;
+    --text-disabled: #D6D3D1;
+    --line: #E7E5E4;
+    --line-strong: #D6D3D1;
+    --ok-bg: #F0FDF4; --ok: #16A34A; --ok-text: #15803D;
+    --err-bg: #FEF2F2; --err: #DC2626; --err-text: #B91C1C;
+    --warn-bg: #FFF7ED; --warn: #EA580C; --warn-text: #C2410C;
+    --info-bg: #EFF6FF; --info: #2563EB; --info-text: #1D4ED8;
+    --page: #ECEAE5;
+    --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 28px;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--page); color: var(--text);
+    font-family: var(--font); font-size: 13px; -webkit-font-smoothing: antialiased;
+    padding-inline: 16px;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Marco de presentación ---------- */
+  .stage { min-height: 100%; display: flex; align-items: center; justify-content: center; gap: 56px; padding-block: 24px; }
+  .side { width: 260px; display: flex; flex-direction: column; gap: 20px; }
+  .side h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.05; text-wrap: balance; }
+  .side h1 span { display: block; color: var(--brand-text); }
+  .side p { margin: 0; color: var(--text-2); line-height: 1.5; }
+  .side .label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; color: var(--text-3); text-transform: uppercase; }
+  .jump { display: flex; flex-direction: column; gap: 6px; }
+  .jump button { text-align: left; padding: 10px 12px; border-radius: var(--r-md); background: var(--bg); border: 1px solid var(--line); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .jump button small { color: var(--text-3); font-weight: 500; }
+  .jump button:hover { border-color: var(--line-strong); }
+
+  .device {
+    position: relative; width: 390px; height: min(844px, calc(100vh - 48px)); min-height: 640px;
+    background: var(--bg); border-radius: 46px; overflow: hidden; flex-shrink: 0;
+    box-shadow: 0 0 0 10px #1C1917, 0 0 0 11px #44403C, 0 30px 60px rgba(12,10,9,.25);
+  }
+  @media (max-width: 900px) { .side { display: none; } }
+  @media (max-width: 500px) {
+    body { padding-inline: 0; }
+    .stage { padding-block: 0; }
+    .device { width: 100%; height: 100dvh; min-height: 0; border-radius: 0; box-shadow: none; }
+    .statusbar { display: none !important; }
+  }
+
+  /* ---------- Pantallas ---------- */
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg); }
+  .screen.push { animation: push .28s ease-out; }
+  .screen.pop { animation: pop .28s ease-out; }
+  .screen.fade { animation: fade .18s ease-out; }
+  @keyframes push { from { transform: translateX(28px); opacity: .4; } to { transform: none; opacity: 1; } }
+  @keyframes pop { from { transform: translateX(-28px); opacity: .4; } to { transform: none; opacity: 1; } }
+  @keyframes fade { from { opacity: .3; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .screen { animation: none !important; } }
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px 6px; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .statusbar .ind { display: flex; gap: 6px; align-items: center; }
+  .statusbar .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .statusbar .bars i { width: 3px; background: currentColor; border-radius: 1px; }
+  .statusbar .bat { width: 22px; height: 11px; border: 1.2px solid currentColor; border-radius: 3px; padding: 1.5px; }
+  .statusbar .bat i { display: block; height: 100%; width: 85%; background: currentColor; border-radius: 1.5px; }
+  .on-color { color: #fff; }
+
+  /* ---------- Componentes ---------- */
+  .ic { display: inline-block; flex-shrink: 0; }
+  .badge { --tc: var(--inverse); display: inline-grid; place-items: center; border-radius: 50%; background: var(--tc); color: #fff; font-weight: 700; flex-shrink: 0; }
+  .badge.s { width: 28px; height: 28px; font-size: 10px; }
+  .badge.m { width: 40px; height: 40px; font-size: 14px; font-weight: 900; }
+  .badge.l { width: 64px; height: 64px; font-size: 22px; font-weight: 900; border: 2px solid #fff; }
+  .badge.xl { width: 80px; height: 80px; font-size: 28px; font-weight: 900; border: 3px solid var(--brand); }
+
+  .appheader { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 16px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; letter-spacing: .2px; }
+  .logo .mark { width: 32px; height: 32px; border-radius: var(--r-md); background: var(--brand); display: grid; place-items: center; font-weight: 900; font-size: 14px; }
+  .iconbtn { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-3); position: relative; flex-shrink: 0; }
+  .iconbtn.oncolor { background: rgba(255,255,255,.18); color: #fff; }
+  .iconbtn .dot { position: absolute; top: 5px; right: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--err); border: 2px solid var(--bg); }
+
+  .days { display: flex; gap: 8px; padding: 0 20px 20px; }
+  .day { width: 46px; padding: 8px 0; border-radius: var(--r-md); border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--bg); }
+  .day small { font-size: 10px; font-weight: 600; letter-spacing: .3px; color: var(--text-2); }
+  .day b { font-size: 15px; font-weight: 800; }
+  .day[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); }
+  .day[aria-pressed="true"] small { color: var(--text); }
+  .day.cal { background: var(--bg-3); border-color: var(--bg-3); justify-content: center; }
+
+  .section { display: flex; flex-direction: column; gap: 12px; }
+  .sechead { display: flex; justify-content: space-between; align-items: center; }
+  .sechead h2 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .4px; }
+  .sechead .link { color: var(--text-2); font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 2px; }
+  .content { padding: 16px 20px 28px; display: flex; flex-direction: column; gap: 24px; }
+  .list { display: flex; flex-direction: column; gap: 12px; }
+
+  .fixture { width: 100%; text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg); padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); transition: border-color .15s, box-shadow .15s; }
+  .fixture:hover { border-color: var(--line-strong); box-shadow: 0 4px 14px rgba(12,10,9,.05); }
+  .fixture .meta { display: flex; justify-content: space-between; align-items: center; }
+  .fixture .meta b { font-size: 12px; font-weight: 600; display: block; }
+  .fixture .meta span { font-size: 11px; color: var(--text-3); }
+  .fixture hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
+  .matchup { display: flex; align-items: center; gap: 8px; }
+  .matchup .team { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .matchup .team.right { justify-content: flex-end; text-align: right; }
+  .teamname { font-size: 11px; font-weight: 600; letter-spacing: .1px; text-transform: uppercase; line-height: 1.25; }
+  .teamlink { border-radius: 4px; text-align: left; }
+  .matchup .team.right .teamlink { text-align: right; }
+  .teamlink:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .vs { font-size: 12px; font-weight: 800; color: var(--text-3); }
+
+  .bottomnav { display: flex; justify-content: space-between; padding: 12px 32px 22px; border-top: 1px solid var(--line); background: var(--bg); flex-shrink: 0; }
+  .navitem { width: 72px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 500; color: var(--text-3); }
+  .navitem[aria-current="page"] { color: var(--text); font-weight: 600; }
+
+  /* Cabeceras con color */
+  .hero { padding: 0 20px 24px; border-radius: 0 0 var(--r-xl) var(--r-xl); display: flex; flex-direction: column; gap: 16px; color: #fff; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; }
+  .topbar b { font-size: 14px; font-weight: 600; }
+  .identity { display: flex; align-items: center; gap: 16px; }
+  .teamtitle { margin: 0; font-size: 30px; font-weight: 900; line-height: .92; letter-spacing: -.5px; text-transform: uppercase; }
+  .teamtitle span { display: block; color: var(--brand); }
+  .muted75 { opacity: .75; font-size: 12px; font-weight: 500; }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .between { justify-content: space-between; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 20px; border-radius: 999px; font-weight: 800; font-size: 13px; letter-spacing: .4px; text-transform: uppercase; transition: background .15s; }
+  .btn.primary { background: var(--brand); color: var(--text); }
+  .btn.primary:hover { background: var(--brand-hover); }
+  .btn.primary:active { background: var(--brand-pressed); }
+  .btn.secondary { background: var(--inverse); color: #fff; }
+  .btn.secondary:hover { background: #292524; }
+  .btn.block { width: 100%; }
+  .btn[disabled] { background: var(--bg-3); color: var(--text-3); cursor: not-allowed; }
+
+  .tabs { margin: 20px 20px 8px; padding: 4px; border-radius: var(--r-lg); background: var(--bg-3); display: flex; gap: 4px; }
+  .tab { flex: 1; padding: 10px 12px; border-radius: var(--r-md); color: var(--text-2); font-weight: 500; }
+  .tab[aria-selected="true"] { background: var(--inverse); color: #fff; font-weight: 700; }
+
+  .card { border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--bg); }
+  .inforow { display: flex; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 12px; }
+  .inforow:last-child { border-bottom: 0; }
+  .inforow span { color: var(--text-2); font-weight: 500; }
+  .inforow b { font-weight: 600; text-align: right; }
+  .inforow.total { background: var(--bg-2); }
+  .inforow.total span { color: var(--text); font-weight: 700; }
+  .inforow.total b { font-size: 15px; font-weight: 800; }
+
+  .stats { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .statrow { display: flex; align-items: center; }
+  .stat { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .stat small { font-size: 9px; font-weight: 600; letter-spacing: .4px; color: var(--text-3); text-transform: uppercase; }
+  .stat b { font-size: 24px; font-weight: 900; }
+  .stat.hl b { color: var(--brand-text); }
+  .vdiv { width: 1px; height: 34px; background: var(--line); }
+  .hdiv { height: 1px; background: var(--line); }
+  .chips { display: flex; gap: 6px; }
+  .res { width: 24px; height: 24px; border-radius: var(--r-sm); display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+  .res.G { background: var(--brand); } .res.E { background: var(--bg-3); } .res.P { background: var(--err-bg); color: var(--err-text); }
+  .meter { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .meter .top { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-2); font-weight: 500; }
+  .meter .top b { color: var(--text); }
+  .track { height: 6px; border-radius: 3px; background: var(--bg-3); overflow: hidden; }
+  .track i { display: block; height: 100%; background: var(--brand); border-radius: 3px; }
+  .para { margin: 0; color: var(--text-2); line-height: 1.5; font-size: 13px; }
+
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { padding: 6px 12px; border-radius: 999px; background: var(--bg-3); color: var(--text-2); font-size: 11px; font-weight: 600; }
+  .pill[aria-pressed="true"] { background: var(--brand); color: var(--text); }
+  .player { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .player:last-child { border-bottom: 0; }
+  .player .n { width: 34px; height: 34px; border-radius: 50%; background: var(--bg-3); display: grid; place-items: center; font-weight: 800; }
+  .player .who { flex: 1; min-width: 0; }
+  .player .who b { display: block; font-weight: 600; font-size: 13px; }
+  .player .who span { font-size: 11px; color: var(--text-3); }
+  .tag { padding: 4px 8px; border-radius: var(--r-sm); background: var(--brand-subtle); color: var(--brand-text); font-size: 10px; font-weight: 700; letter-spacing: .3px; }
+  .empty-note { padding: 18px; text-align: center; color: var(--text-3); font-size: 12px; }
+
+  /* Próximo partido */
+  .nextcard { background: var(--inverse); color: #fff; border-radius: var(--r-lg); padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+  .nextcard .kicker { font-size: 10px; font-weight: 600; letter-spacing: .3px; color: var(--brand); }
+  .countdown { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; background: var(--brand); color: var(--text); font-size: 10px; font-weight: 600; letter-spacing: .3px; }
+  .nextcard .mu { display: flex; align-items: center; justify-content: space-between; }
+  .nextcard .col { width: 96px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+  .nextcard .when { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .nextcard .when b { font-size: 15px; font-weight: 800; }
+  .nextcard .when span, .nextcard .venue { font-size: 11px; color: var(--text-3); }
+  .nextcard .venue { display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+  /* Detalle de partido */
+  .matchhero { background: var(--inverse); }
+  .mhmu { display: flex; align-items: center; justify-content: space-between; }
+  .mhcol { width: 100px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .mhcol .teamname { font-weight: 800; color: #fff; }
+  .mhtime { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .mhtime small { font-size: 10px; font-weight: 600; letter-spacing: .3px; color: var(--text-3); }
+  .mhtime b { font-size: 24px; font-weight: 900; }
+  .status-pill { padding: 4px 8px; border-radius: 999px; background: var(--brand); color: var(--text); font-size: 10px; font-weight: 600; letter-spacing: .3px; }
+  .ctacard { background: var(--brand-subtle); border: 1px solid var(--brand); border-radius: var(--r-lg); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .icontile { width: 40px; height: 40px; border-radius: var(--r-md); background: var(--brand); display: grid; place-items: center; flex-shrink: 0; }
+  .balance { background: var(--bg-2); border-radius: var(--r-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .splitbar { display: flex; gap: 3px; }
+  .splitbar i { height: 6px; border-radius: 3px; display: block; }
+  .h2h { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .h2h:last-child { border-bottom: 0; }
+  .h2h .d { width: 88px; flex-shrink: 0; }
+  .h2h .d b { display: block; font-size: 12px; font-weight: 600; }
+  .h2h .d span { font-size: 11px; color: var(--text-3); }
+  .h2h .score { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--text-2); }
+  .h2h .score b { padding: 4px 8px; border-radius: var(--r-sm); background: var(--bg-3); color: var(--text); font-size: 13px; font-weight: 800; }
+  .caption { font-size: 11px; color: var(--text-3); margin: 0; }
+
+  .formations { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .formation { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: var(--bg-3); font-size: 11px; font-weight: 600; }
+  .formation i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+  .formation em { font-style: normal; font-weight: 800; color: var(--text-2); }
+  .pitch { position: relative; width: 100%; aspect-ratio: 335 / 540; max-width: 100%; border-radius: var(--r-lg); overflow: hidden;
+    background: repeating-linear-gradient(to bottom, #2E7D4F 0 12.5%, #338A58 12.5% 25%); }
+  .pitch .ln { position: absolute; border: 1.5px solid rgba(255,255,255,.55); }
+  .pitch .pl { position: absolute; width: 64px; margin-left: -32px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .pitch .pl .badge { border: 1.5px solid #fff; }
+  .pitch .pl span { color: #fff; font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64px; text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .absence { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .absence:last-child { border-bottom: 0; }
+  .absence .ind { width: 32px; height: 32px; border-radius: var(--r-md); display: grid; place-items: center; flex-shrink: 0; font-weight: 900; font-size: 18px; }
+  .absence .who { flex: 1; min-width: 0; }
+  .absence .who b { display: block; font-size: 13px; font-weight: 600; }
+  .absence .who span { font-size: 11px; color: var(--text-3); line-height: 1.35; }
+  .state { padding: 4px 8px; border-radius: var(--r-sm); font-size: 10px; font-weight: 700; letter-spacing: .3px; }
+  .t-exp { background: var(--err-bg); color: var(--err-text); }
+  .t-les { background: var(--warn-bg); color: var(--warn-text); }
+  .t-dud { background: var(--info-bg); color: var(--info-text); }
+  .redcard { width: 11px; height: 15px; border-radius: 2px; background: var(--err); transform: rotate(-12deg); }
+
+  /* Compra */
+  .innerbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; }
+  .innerbar b { font-size: 15px; font-weight: 700; }
+  .steps { display: flex; flex-direction: column; gap: 8px; }
+  .steps .lbl { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; letter-spacing: .3px; color: var(--text-3); }
+  .steps .lbl b { color: var(--text); font-size: 12px; letter-spacing: 0; }
+  .steps .seg { display: flex; gap: 6px; }
+  .steps .seg i { flex: 1; height: 4px; border-radius: 2px; background: var(--bg-3); }
+  .steps .seg i.on { background: var(--brand); }
+  .zone { width: 100%; text-align: left; display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--bg); }
+  .zone .sw { width: 6px; height: 36px; border-radius: 3px; flex-shrink: 0; }
+  .zone .z { flex: 1; min-width: 0; }
+  .zone .z b { display: block; font-size: 13px; font-weight: 600; }
+  .zone .z span { font-size: 11px; color: var(--text-3); }
+  .zone .p { text-align: right; }
+  .zone .p b { display: block; font-size: 13px; font-weight: 600; }
+  .zone .p span { font-size: 11px; color: var(--text-3); }
+  .zone[aria-checked="true"] { background: var(--brand-subtle); border: 1.5px solid var(--focus); }
+  .zone[aria-disabled="true"] { background: var(--bg-2); cursor: not-allowed; }
+  .zone[aria-disabled="true"] .z b, .zone[aria-disabled="true"] .z span { color: var(--text-disabled); }
+  .radio { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line-strong); background: var(--bg); flex-shrink: 0; display: grid; place-items: center; }
+  [aria-checked="true"] > .radio { background: var(--inverse); border-color: var(--inverse); }
+  [aria-checked="true"] > .radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+  .qty { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: var(--r-lg); background: var(--bg-2); }
+  .qty b { display: block; font-size: 13px; font-weight: 600; }
+  .qty span { font-size: 11px; color: var(--text-3); }
+  .stepper { display: flex; align-items: center; gap: 14px; }
+  .stepper button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-3); }
+  .stepper button.plus { background: var(--inverse); color: #fff; }
+  .stepper button:disabled { opacity: .35; cursor: not-allowed; }
+  .stepper output { width: 24px; text-align: center; font-size: 18px; font-weight: 800; }
+  .checkout { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px 28px; border-top: 1px solid var(--line); background: var(--bg); flex-shrink: 0; }
+  .checkout small { display: block; font-size: 11px; color: var(--text-2); }
+  .checkout strong { font-size: 22px; font-weight: 900; }
+  .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+  .field input, .field select { width: 100%; padding: 13px 14px; border-radius: var(--r-md); border: 1px solid var(--line); font: inherit; font-size: 13px; font-weight: 500; color: var(--text); background: var(--bg); }
+  .field input::placeholder { color: var(--text-3); }
+  .field input:focus, .field select:focus { outline: none; border: 2px solid var(--focus); padding: 12px 13px; }
+  .field.error input, .field.error select { border-color: var(--err); }
+  .field .err { font-size: 11px; color: var(--err-text); }
+  .fields { display: flex; flex-direction: column; gap: 12px; }
+  .method { width: 100%; text-align: left; display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--bg); }
+  .method .icontile { background: var(--bg-3); }
+  .method[aria-checked="true"] { background: var(--brand-subtle); border: 1.5px solid var(--focus); }
+  .method[aria-checked="true"] .icontile { background: var(--brand); }
+  .method .z { flex: 1; }
+  .method .z b { display: block; font-size: 13px; font-weight: 600; }
+  .method .z span { font-size: 11px; color: var(--text-3); }
+  .secure { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: var(--text-3); }
+
+  .success { width: 72px; height: 72px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: grid; place-items: center; align-self: center; }
+  .ticket { border-radius: var(--r-lg); background: var(--bg); overflow: hidden; box-shadow: 0 6px 20px rgba(12,10,9,.08); }
+  .ticket .head { background: var(--brand); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .ticket .head .k { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; letter-spacing: .3px; }
+  .ticket .head .mu { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .ticket .head .mu .t { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+  .ticket .head .badge { border: 2px solid #fff; }
+  .ticket .perf { position: relative; height: 20px; }
+  .ticket .perf::before { content: ""; position: absolute; left: 14px; right: 14px; top: 9px; border-top: 1.5px dashed var(--line-strong); }
+  .ticket .perf i { position: absolute; top: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--bg-2); }
+  .ticket .perf i:first-child { left: -10px; } .ticket .perf i:last-child { right: -10px; }
+  .ticket .body { display: flex; gap: 16px; padding: 8px 16px 16px; align-items: center; }
+  .ticket canvas { width: 112px; height: 112px; flex-shrink: 0; image-rendering: pixelated; }
+  .ticket dl { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .ticket dt { font-size: 10px; font-weight: 600; letter-spacing: .3px; color: var(--text-3); text-transform: uppercase; }
+  .ticket dd { margin: 0; font-size: 13px; font-weight: 600; }
+
+  .emptystate { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 32px; text-align: center; }
+  .emptystate .ill { width: 88px; height: 88px; border-radius: 50%; background: var(--brand-subtle); color: var(--brand-pressed); display: grid; place-items: center; }
+  .emptystate h2 { margin: 0; font-size: 16px; font-weight: 800; }
+  .pagetitle { margin: 0; padding: 12px 20px; font-size: 24px; font-weight: 900; }
+
+  .toast { position: absolute; left: 20px; right: 20px; bottom: 96px; background: var(--inverse); color: #fff; padding: 12px 14px; border-radius: var(--r-md); font-weight: 500; font-size: 12px; text-align: center; z-index: 5; animation: fade .2s ease-out; }
+</style>
+
+<div class="stage">
+  <aside class="side">
+    <h1>Liga<span>El Dorado</span></h1>
+    <p>Prototipo navegable de la app de la liga: partidos, equipos y compra de boletas. Toca las tarjetas, los nombres de los equipos y los botones como en el teléfono.</p>
+    <div class="label">Ir a una pantalla</div>
+    <nav class="jump" aria-label="Accesos rápidos">
+      <button type="button" data-jump="home">Inicio <small>Próximos encuentros</small></button>
+      <button type="button" data-jump="match">Detalle de partido <small>2 pestañas</small></button>
+      <button type="button" data-jump="team">Equipo <small>Sabana United</small></button>
+      <button type="button" data-jump="buy">Compra de boletas <small>3 pasos</small></button>
+      <button type="button" data-jump="following">Siguiendo <small>Vacía</small></button>
+      <button type="button" data-jump="profile">Perfil <small>Vacía</small></button>
+    </nav>
+    <p class="label">Solo modo claro · Datos de ejemplo</p>
+  </aside>
+  <main class="device" id="device" aria-label="Prototipo de la app Liga El Dorado"></main>
+</div>
+
+<script>
+(() => {
+  /* ---------------- Íconos (misma familia que en Figma) ---------------- */
+  const P = {
+    bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    home: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+    star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>',
+    user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    right: '<path d="M9 18l6-6-6-6"/>', left: '<path d="M15 18l-6-6 6-6"/>',
+    more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', check: '<path d="M20 6L9 17l-5-5"/>',
+    pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+    card: '<rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    ticket: '<path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/><path d="M13 5v2M13 11v2M13 17v2"/>',
+    phone: '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
+    bank: '<path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  };
+  const ic = (n, s = 20) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+  /* ---------------- Datos ---------------- */
+  const TEAMS = {
+    DF: { name: 'Dorado FC', short: 'DOR', color: '#E0A82E', city: 'Bogotá', stadium: 'Estadio El Dorado', cap: '12.000', founded: 1995, dt: 'Hernán Villa' },
+    RC: { name: 'Real Cundinamarca', short: 'RCU', color: '#1B2A4A', city: 'Fusagasugá', stadium: 'Estadio Cundinamarca', cap: '9.200', founded: 2001, dt: 'Óscar Pineda' },
+    AA: { name: 'Atlético Andino', short: 'AND', color: '#C0392B', city: 'Tunja', stadium: 'Estadio Los Andes', cap: '10.500', founded: 1989, dt: 'Julián Arce' },
+    SU: { name: 'Sabana United', short: 'SAB', color: '#1A8A8A', city: 'Chía', stadium: 'Estadio La Sabana', cap: '8.500', founded: 1998, dt: 'Andrés Rojas' },
+    BS: { name: 'Boyacá Star', short: 'BOY', color: '#6C3FA0', city: 'Duitama', stadium: 'Alto Chicamocha', cap: '7.800', founded: 2004, dt: 'Fabián Neira' },
+    LF: { name: 'Llanos FC', short: 'LLA', color: '#D2691E', city: 'Villavicencio', stadium: 'Estadio Bello Horizonte', cap: '15.000', founded: 1992, dt: 'Wilson Rey' },
+    CS: { name: 'Cordillera SC', short: 'COR', color: '#2E7D4F', city: 'Zipaquirá', stadium: 'Estadio La Cordillera', cap: '6.400', founded: 2008, dt: 'Camilo Durán' },
+    PU: { name: 'Pacífico United', short: 'PAC', color: '#2563AB', city: 'Buenaventura', stadium: 'Estadio Pacífico', cap: '11.000', founded: 2010, dt: 'Álvaro Mina' },
+  };
+  const KEYS = Object.keys(TEAMS);
+  const DOW = { 'Sáb': 'Sábado', 'Dom': 'Domingo' };
+  const MON = { sep: 'septiembre', oct: 'octubre', nov: 'noviembre' };
+  const MATCHES = {};
+  function addMatch(id, home, away, dow, d, mon, time, venue, extra) { MATCHES[id] = Object.assign({ id, home, away, dow, d, mon, time, venue: venue || TEAMS[home].stadium }, extra || {}); return MATCHES[id]; }
+  const fmtShort = m => `${m.dow} ${m.d} ${m.mon}`;
+  const fmtUpper = m => fmtShort(m).toUpperCase();
+  const fmtLong = m => `${DOW[m.dow]} ${m.d} de ${MON[m.mon]}`;
+
+  // Inicio (mismos partidos que en Figma)
+  const HOME_IDS = [
+    addMatch('m1', 'DF', 'RC', 'Sáb', 26, 'sep', '3:00 PM', 'Estadio El Dorado').id,
+    addMatch('m2', 'AA', 'SU', 'Sáb', 26, 'sep', '5:30 PM', 'Estadio La Sabana').id,
+    addMatch('m3', 'BS', 'LF', 'Dom', 27, 'sep', '2:00 PM', 'Alto Chicamocha').id,
+    addMatch('m4', 'CS', 'PU', 'Dom', 27, 'sep', '4:30 PM', 'Estadio Pacífico').id,
+  ];
+  // Calendario de las próximas 7 fechas
+  const SCHEDULE = [['Sáb', 3, 'oct', '3:00 PM', 5], ['Dom', 11, 'oct', '5:30 PM', 13], ['Sáb', 17, 'oct', '4:00 PM', 19], ['Dom', 25, 'oct', '2:00 PM', 27], ['Sáb', 31, 'oct', '3:30 PM', 33], ['Dom', 8, 'nov', '5:00 PM', 41], ['Sáb', 14, 'nov', '3:00 PM', 47]];
+  const SABANA_NEXT = [['SU', 'DF'], ['LF', 'SU'], ['SU', 'CS'], ['RC', 'SU'], ['SU', 'BS'], ['PU', 'SU'], ['SU', 'AA']];
+  function upcomingFor(key) {
+    let pairs;
+    if (key === 'SU') pairs = SABANA_NEXT;
+    else { const others = KEYS.filter(k => k !== key); const shift = KEYS.indexOf(key); pairs = others.map((o, i) => { const opp = others[(i + shift) % others.length]; return i % 2 ? [opp, key] : [key, opp]; }); }
+    return pairs.map(([h, a], i) => { const [dow, d, mon, time, days] = SCHEDULE[i]; const id = `u-${h}-${a}-${i}`;
+      return MATCHES[id] || addMatch(id, h, a, dow, d, mon, time, h === 'SU' ? 'Estadio La Sabana · Chía' : TEAMS[h].stadium, { countdown: days }); });
+  }
+
+  // Aleatoriedad determinista para datos de relleno
+  function rng(seedStr) { let h = 1779033703 ^ seedStr.length; for (let i = 0; i < seedStr.length; i++) { h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+    return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; }; }
+  const SURN = ['Ospina', 'Gil', 'Duarte', 'Rendón', 'Parra', 'León', 'Quintero', 'Bernal', 'Cano', 'Palacios', 'Suárez', 'Pérez', 'Castro', 'Rojas', 'Mena', 'Vélez', 'Ruiz', 'Salazar', 'Arango', 'Cuesta', 'Ibarra', 'Mosquera', 'Valencia', 'Cortés', 'Murillo', 'Zapata', 'Hurtado', 'Mejía', 'Correa', 'Lozano', 'Montoya', 'Giraldo', 'Cuéllar', 'Restrepo', 'Otálvaro', 'Rincón', 'Sierra', 'Ortiz', 'Herrera', 'Morales', 'Rentería', 'Cárdenas', 'Díaz', 'Angulo', 'Borja', 'Chará', 'Moreno', 'Ramírez'];
+  const FIRST = ['Juan', 'Andrés', 'Mateo', 'Felipe', 'Sergio', 'Iván', 'Camilo', 'Nicolás', 'Daniel', 'Kevin', 'Sebastián', 'Santiago', 'Jhon', 'Brayan', 'Luis', 'Carlos'];
+  const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+  function lineup(key) {
+    const fixed = {
+      DF: { f: '4-3-3', rows: [[['1', 'Pérez']], [['3', 'Vélez'], ['5', 'Mena'], ['4', 'Rojas'], ['2', 'Castro']], [['8', 'Ruiz'], ['6', 'Salazar'], ['10', 'Arango']], [['7', 'Cuesta'], ['9', 'Ibarra'], ['11', 'Mosquera']]] },
+      RC: { f: '4-4-2', rows: [[['1', 'Ospina']], [['2', 'Gil'], ['4', 'Duarte'], ['5', 'Rendón'], ['3', 'Parra']], [['7', 'León'], ['8', 'Quintero'], ['6', 'Bernal'], ['11', 'Cano']], [['9', 'Palacios'], ['10', 'Suárez']]] },
+      SU: { f: '4-3-3', rows: [[['1', 'Cárdenas']], [['3', 'Ortiz'], ['4', 'Díaz'], ['5', 'Angulo'], ['2', 'Borja']], [['8', 'Herrera'], ['6', 'Chará'], ['10', 'Morales']], [['7', 'Moreno'], ['9', 'Rentería'], ['11', 'Ramírez']]] },
+    };
+    if (fixed[key]) return fixed[key];
+    const r = rng('lu' + key); const pool = SURN.slice().sort(() => r() - .5); let i = 0; const nm = () => pool[i++];
+    const f = r() > .5 ? '4-3-3' : '4-4-2';
+    const rows = f === '4-3-3' ? [[['1', nm()]], [['3', nm()], ['5', nm()], ['4', nm()], ['2', nm()]], [['8', nm()], ['6', nm()], ['10', nm()]], [['7', nm()], ['9', nm()], ['11', nm()]]]
+      : [[['1', nm()]], [['2', nm()], ['4', nm()], ['5', nm()], ['3', nm()]], [['7', nm()], ['8', nm()], ['6', nm()], ['11', nm()]], [['9', nm()], ['10', nm()]]];
+    return { f, rows };
+  }
+  function absences(key) {
+    const fixed = {
+      DF: [['exp', 'Andrés Cuéllar', 'Tarjeta roja vs Llanos FC · 1 fecha'], ['les', 'Mateo Giraldo', 'Rotura de ligamentos · resto de la temporada']],
+      RC: [['exp', 'Iván Correa', 'Doble amarilla vs Atlético Andino · 1 fecha'], ['les', 'Felipe Montoya', 'Desgarro muscular · 3 semanas'], ['dud', 'Sergio Lozano', 'Molestia en el tobillo · se decide el sábado']],
+    };
+    if (fixed[key]) return fixed[key];
+    const r = rng('ab' + key); const n = 1 + Math.floor(r() * 2); const out = [];
+    const opts = [['exp', 'Tarjeta roja · 1 fecha'], ['les', 'Esguince de rodilla · 2 semanas'], ['les', 'Sobrecarga muscular · 1 semana'], ['dud', 'Golpe en el tobillo · en evaluación']];
+    for (let i = 0; i < n; i++) { const o = pick(r, opts); out.push([o[0], pick(r, FIRST) + ' ' + pick(r, SURN), o[1]]); }
+    return out;
+  }
+  function headToHead(m) {
+    if (m.home === 'DF' && m.away === 'RC') return [
+      ['12 abr 2026', 'Liga · F14', 'RC', 1, 1, 'DF'], ['8 nov 2025', 'Liga · F7', 'DF', 2, 0, 'RC'], ['17 may 2025', 'Copa · Semi', 'RC', 2, 1, 'DF'],
+      ['22 feb 2025', 'Liga · F3', 'DF', 3, 1, 'RC'], ['30 ago 2024', 'Liga · F11', 'RC', 1, 0, 'DF']];
+    const r = rng('h2h' + m.home + m.away); const dates = [['12 abr 2026', 'Liga · F14'], ['8 nov 2025', 'Liga · F7'], ['17 may 2025', 'Copa · Octavos'], ['22 feb 2025', 'Liga · F3'], ['30 ago 2024', 'Liga · F11']];
+    return dates.map(([d, t], i) => { const h = i % 2 ? m.home : m.away, a = i % 2 ? m.away : m.home; return [d, t, h, Math.floor(r() * 4), Math.floor(r() * 3), a]; });
+  }
+  const REFS = ['Carlos Ortega', 'Wilmar Roldán', 'Jhon Hinestroza', 'Diana Ruiz', 'Andrés Rojas Noguera'];
+  function teamInfo(key) {
+    const t = TEAMS[key];
+    if (key === 'SU') return {
+      pos: '2°', pj: 7, pts: 16, gf: 14, form: ['G', 'G', 'E', 'G', 'P'], pos_: 58, eff: 71, fans: '3.2K',
+      history: 'Nacido en 1998 en la Sabana de Bogotá, Sabana United pasó de ser un club de barrio a protagonista de la Liga El Dorado. Conocido por su juego de posesión y su cantera, ha levantado 3 títulos de liga y es el equipo con más jugadores formados en casa.',
+      facts: [['Estadio', 'La Sabana · 8.500'], ['Director técnico', 'Andrés Rojas'], ['Títulos de liga', '3 (2011, 2017, 2023)'], ['Capitán', 'Juan Pablo Díaz']],
+      squad: [['1', 'Mateo Cárdenas', 'Portero', 'POR'], ['4', 'Juan Pablo Díaz', 'Defensa central · C', 'DEF'], ['3', 'Sebastián Ortiz', 'Lateral izquierdo', 'DEF'], ['8', 'Nicolás Herrera', 'Mediocampista', 'MED'], ['10', 'Daniel Morales', 'Mediapunta', 'MED'], ['9', 'Kevin Rentería', 'Delantero centro', 'DEL']],
+    };
+    const r = rng('ti' + key); const pj = 7; const w = Math.floor(r() * 5), dr = Math.floor(r() * (pj - w));
+    const form = Array.from({ length: 5 }, () => { const x = r(); return x < .45 ? 'G' : x < .7 ? 'E' : 'P'; });
+    const titles = Math.floor(r() * 3);
+    const lu = lineup(key).rows.flat();
+    const posName = n => (n === '1' ? ['Portero', 'POR'] : ['2', '3', '4', '5'].includes(n) ? ['Defensa', 'DEF'] : ['6', '8', '10'].includes(n) ? ['Mediocampista', 'MED'] : ['Delantero', 'DEL']);
+    const squad = [lu[0], lu[1], lu[3], lu[5], lu[6], lu[lu.length - 1]].map(([n, s]) => { const [p, tg] = posName(n); return [n, pick(r, FIRST) + ' ' + s, p, tg]; });
+    return {
+      pos: (1 + Math.floor(r() * 8)) + '°', pj, pts: w * 3 + dr, gf: 4 + Math.floor(r() * 10), form, pos_: 42 + Math.floor(r() * 18), eff: 45 + Math.floor(r() * 30), fans: (0.8 + r() * 3).toFixed(1) + 'K',
+      history: `Fundado en ${t.founded} en ${t.city}, ${t.name} es uno de los clubes que dan identidad a la Liga El Dorado. Juega de local en ${t.stadium} y ${titles ? `suma ${titles} ${titles > 1 ? 'títulos' : 'título'} de liga` : 'todavía busca su primer título de liga'}.`,
+      facts: [['Estadio', `${t.stadium.replace('Estadio ', '')} · ${t.cap}`], ['Director técnico', t.dt], ['Títulos de liga', titles ? String(titles) : 'Ninguno'], ['Capitán', squad[1][1]]],
+      squad,
+    };
+  }
+  const ZONES = [
+    { id: 'norte', name: 'Norte · Barra', desc: 'Detrás del arco norte · Puerta 1', price: 25000, color: '#2E7D4F', gate: '1' },
+    { id: 'oriental', name: 'Oriental General', desc: 'Tribuna lateral · Puerta 3', price: 35000, color: '#EDD478', gate: '3' },
+    { id: 'occidental', name: 'Occidental Numerada', desc: 'Silla numerada · Puerta 5', price: 60000, color: '#2563AB', gate: '5' },
+    { id: 'vip', name: 'Palco VIP', desc: 'Incluye parqueadero y bebida', price: 150000, soldOut: true },
+  ];
+  const FEE = 2000;
+  const money = n => '$' + n.toLocaleString('es-CO');
+
+  /* ---------------- Estado y navegación ---------------- */
+  const state = {
+    stack: [{ screen: 'home' }], tabHome: 0, filter: 'Todos', following: {},
+    buy: null, toast: null,
+  };
+  const cur = () => state.stack[state.stack.length - 1];
+  const device = document.getElementById('device');
+  function go(route, anim = 'push') { state.stack.push(route); render(anim); }
+  function back() { if (state.stack.length > 1) { state.stack.pop(); render('pop'); } }
+  function root(route) { state.stack = [route]; render('fade'); }
+  function replace(route, anim = 'fade') { state.stack[state.stack.length - 1] = route; render(anim); }
+  function startBuy(matchId) { state.buy = { matchId, zone: 'oriental', qty: 2, method: 'card', errors: {}, form: { name: 'Laura Gómez', doc: '1.020.456.789', email: 'laura.gomez@correo.com', cardNum: '4821 5530 1290 7730', exp: '08 / 28', cvv: '', holder: 'LAURA GOMEZ', phone: '300 123 4567', bank: 'Bancolombia' } }; go({ screen: 'select' }); }
+
+  /* ---------------- Piezas ---------------- */
+  const badge = (k, size = 's', label) => `<span class="badge ${size}" style="--tc:${TEAMS[k].color}">${label || k}</span>`;
+  const statusBar = (onColor, bg) => `<div class="statusbar ${onColor ? 'on-color' : ''}" style="background:${bg || 'var(--bg)'}"><span class="num">9:41</span><span class="ind"><span class="bars"><i style="height:4px"></i><i style="height:6.5px"></i><i style="height:9px"></i><i style="height:11.5px"></i></span><span class="bat"><i></i></span></span></div>`;
+  const secHead = (title, link) => `<div class="sechead"><h2>${title}</h2>${link ? `<span class="link">${link}${ic('right', 16)}</span>` : ''}</div>`;
+  const teamLink = (k, cls = 'teamname') => `<button type="button" class="teamlink ${cls}" data-act="team" data-team="${k}">${TEAMS[k].name}</button>`;
+  function fixtureCard(m) {
+    return `<div class="fixture" role="button" tabindex="0" data-act="match" data-id="${m.id}" aria-label="Ver partido ${TEAMS[m.home].name} contra ${TEAMS[m.away].name}">
+      <div class="meta"><div><b>${fmtShort(m)}</b><span class="num">${m.time}</span></div><span>${m.venue.replace(' · Chía', '')}</span></div>
+      <hr>
+      <div class="matchup">
+        <div class="team">${badge(m.home)}${teamLink(m.home)}</div>
+        <span class="vs">VS</span>
+        <div class="team right">${teamLink(m.away)}${badge(m.away)}</div>
+      </div></div>`;
+  }
+  function bottomNav(active) {
+    const it = (id, icon, label) => `<button type="button" class="navitem" data-act="nav" data-to="${id}" ${active === id ? 'aria-current="page"' : ''}>${ic(icon, 20)}${label}</button>`;
+    return `<nav class="bottomnav" aria-label="Navegación principal">${it('home', 'home', 'Inicio')}${it('following', 'star', 'Siguiendo')}${it('profile', 'user', 'Perfil')}</nav>`;
+  }
+  const tabs = (items, sel, act) => `<div class="tabs" role="tablist">${items.map((t, i) => `<button type="button" class="tab" role="tab" aria-selected="${i === sel}" data-act="${act}" data-i="${i}">${t}</button>`).join('')}</div>`;
+  const infoCard = rows => `<div class="card">${rows.map(([k, v]) => `<div class="inforow"><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
+  const innerBar = title => `<div class="innerbar"><button type="button" class="iconbtn" data-act="back" aria-label="Volver">${ic('left', 20)}</button><b>${title}</b><span style="width:38px"></span></div>`;
+  const steps = (n, label) => `<div class="steps"><div class="lbl"><span>PASO ${n} DE 3</span><b>${label}</b></div><div class="seg">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</div></div>`;
+  function nextCard(m, withBtn) {
+    return `<div class="nextcard">
+      <div class="row between"><span class="kicker">PRÓXIMO PARTIDO</span><span class="countdown">${ic('clock', 12)}Faltan ${m.countdown || 5} días</span></div>
+      <div class="mu"><div class="col">${badge(m.home, 'm')}<span class="teamname">${TEAMS[m.home].name}</span></div>
+        <div class="when"><b>${fmtUpper(m)}</b><span class="num">${m.time}</span></div>
+        <div class="col">${badge(m.away, 'm')}<span class="teamname">${TEAMS[m.away].name}</span></div></div>
+      <div class="venue">${ic('pin', 14)}${m.venue}</div>
+      ${withBtn ? `<button type="button" class="btn primary block" data-act="buy" data-id="${m.id}">${ic('ticket', 16)}Comprar boleta</button>` : ''}
+    </div>`;
+  }
+
+  /* ---------------- Pantallas ---------------- */
+  function scrHome() {
+    const days = [['HOY', 22], ['MIÉ', 23], ['JUE', 24], ['VIE', 25], ['SÁB', 26]];
+    return `${statusBar()}
+      <div class="scroll">
+        <div class="appheader"><div class="logo"><span class="mark">LD</span>LIGA EL DORADO</div>
+          <button type="button" class="iconbtn" data-act="toast" data-msg="No tienes notificaciones nuevas" aria-label="Notificaciones">${ic('bell', 20)}<span class="dot"></span></button></div>
+        <div class="days">${days.map(([l, n], i) => `<button type="button" class="day" aria-pressed="${state.tabHome === i}" data-act="day" data-i="${i}"><small>${l}</small><b class="num">${n}</b></button>`).join('')}
+          <button type="button" class="day cal" aria-label="Abrir calendario" data-act="toast" data-msg="El calendario completo llega pronto">${ic('calendar', 18)}</button></div>
+        <div class="content" style="padding-top:0"><div class="section">${secHead('PRÓXIMOS ENCUENTROS', 'Ver todos')}
+          <div class="list">${HOME_IDS.map(id => fixtureCard(MATCHES[id])).join('')}</div></div></div>
+      </div>${bottomNav('home')}`;
+  }
+  function teamHero(k) {
+    const t = TEAMS[k]; const info = teamInfo(k); const words = t.name.toUpperCase().split(' '); const first = words.slice(0, -1).join(' ') || words[0]; const last = words.length > 1 ? words[words.length - 1] : '';
+    const f = !!state.following[k];
+    return `<div class="hero" style="background:${t.color}">
+      <div class="topbar"><button type="button" class="iconbtn oncolor" data-act="back" aria-label="Volver">${ic('left', 20)}</button><b>Equipo</b><button type="button" class="iconbtn oncolor" aria-label="Más opciones" data-act="toast" data-msg="Más opciones llegan pronto">${ic('more', 20)}</button></div>
+      <div class="identity"><span class="badge xl" style="--tc:#fff;color:${t.color}">${k}</span>
+        <div style="display:flex;flex-direction:column;gap:6px"><h1 class="teamtitle">${first}${last ? `<span>${last}</span>` : ''}</h1><span class="muted75">Fundado en ${t.founded} · ${t.city}</span></div></div>
+      <div class="row"><button type="button" class="btn ${f ? 'secondary' : 'primary'}" data-act="follow" data-team="${k}">${ic(f ? 'check' : 'plus', 16)}${f ? 'Siguiendo' : 'Seguir'}</button>
+        <div><b style="font-size:15px;font-weight:800" class="num">${info.fans}</b><div class="muted75" style="font-size:11px">seguidores</div></div></div>
+    </div>`;
+  }
+  function scrTeam(r) {
+    const k = r.team, t = TEAMS[k], info = teamInfo(k), tab = r.tab || 0;
+    let body;
+    if (tab === 0) {
+      const f = r.filter || 'Todos';
+      const squad = info.squad.filter(p => f === 'Todos' || p[3] === f);
+      body = `<div class="section">${secHead('TEMPORADA 2026', 'Tabla')}
+        <div class="card stats"><div class="statrow">
+          <div class="stat hl"><small>Posición</small><b class="num">${info.pos}</b></div><span class="vdiv"></span>
+          <div class="stat"><small>Partidos</small><b class="num">${info.pj}</b></div><span class="vdiv"></span>
+          <div class="stat"><small>Puntos</small><b class="num">${info.pts}</b></div><span class="vdiv"></span>
+          <div class="stat"><small>Goles</small><b class="num">${info.gf}</b></div></div>
+          <div class="hdiv"></div>
+          <div class="row between"><b style="font-size:12px;font-weight:600">Últimos 5</b><div class="chips">${info.form.map(x => `<span class="res ${x}">${x}</span>`).join('')}</div></div>
+          <div class="row"><div class="meter"><div class="top"><span>Posesión prom.</span><b class="num">${info.pos_}%</b></div><div class="track"><i style="width:${info.pos_}%"></i></div></div>
+            <div class="meter"><div class="top"><span>Efectividad</span><b class="num">${info.eff}%</b></div><div class="track"><i style="width:${info.eff}%"></i></div></div></div>
+        </div></div>
+        <div class="section">${secHead('HISTORIA')}<p class="para">${info.history}</p>${infoCard(info.facts)}</div>
+        <div class="section">${secHead('NÓMINA', 'Ver los 24')}
+          <div class="pills">${['Todos', 'POR', 'DEF', 'MED', 'DEL'].map(p => `<button type="button" class="pill" aria-pressed="${p === f}" data-act="filter" data-f="${p}">${p}</button>`).join('')}</div>
+          <div class="card">${squad.length ? squad.map(([n, name, role, tag]) => `<div class="player"><span class="n num">${n}</span><div class="who"><b>${name}</b><span>${role}</span></div><span class="tag">${tag}</span></div>`).join('') : '<div class="empty-note">Sin jugadores en esta posición.</div>'}</div></div>`;
+    } else {
+      const up = upcomingFor(k);
+      body = `<div class="section" style="gap:12px">${secHead('PRÓXIMOS 7 PARTIDOS', 'Calendario')}${nextCard(up[0], true)}${up.slice(1).map(fixtureCard).join('')}</div>`;
+    }
+    return `${statusBar(true, t.color)}<div class="scroll">${teamHero(k)}${tabs(['Info del club', 'Próximos partidos'], tab, 'teamtab')}<div class="content">${body}</div></div>${bottomNav('home')}`;
+  }
+  function pitchHTML(m) {
+    const H = lineup(m.home), A = lineup(m.away);
+    const xs = { 1: [50], 2: [35, 65], 3: [21.5, 50, 78.5], 4: [13.4, 37.3, 62.7, 86.6] };
+    // Visitante arriba (portero arriba), local abajo (portero abajo)
+    const yA = [4, 15.2, 27.8, 38.5], yH = [87, 75.9, 64, 52.6];
+    const place = (rows, ys, key) => rows.map((row, ri) => row.map((p, i) => `<div class="pl" style="left:${xs[row.length][i]}%;top:${ys[ri]}%">${badge(key, 's', p[0])}<span>${p[1]}</span></div>`).join('')).join('');
+    const lines = `<i class="ln" style="left:3%;right:3%;top:1.85%;bottom:1.85%"></i><i class="ln" style="left:3%;right:3%;top:50%;height:0;border-width:1.5px 0 0"></i>
+      <i class="ln" style="left:38%;width:24%;top:42.6%;aspect-ratio:1;border-radius:50%"></i>
+      <i class="ln" style="left:24.6%;width:50.8%;top:1.85%;height:11.9%;border-top:0"></i><i class="ln" style="left:38%;width:24%;top:1.85%;height:4.4%;border-top:0"></i>
+      <i class="ln" style="left:24.6%;width:50.8%;bottom:1.85%;height:11.9%;border-bottom:0"></i><i class="ln" style="left:38%;width:24%;bottom:1.85%;height:4.4%;border-bottom:0"></i>`;
+    return { html: `<div class="pitch" role="img" aria-label="Alineaciones probables: ${TEAMS[m.away].name} ${A.f} arriba y ${TEAMS[m.home].name} ${H.f} abajo">${lines}${place(A.rows, yA, m.away)}${place(H.rows, yH, m.home)}</div>`, H, A };
+  }
+  function scrMatch(r) {
+    const m = MATCHES[r.id], tab = r.tab || 0; const h = TEAMS[m.home], a = TEAMS[m.away];
+    const hero = `<div class="hero matchhero">
+      <div class="topbar"><button type="button" class="iconbtn oncolor" data-act="back" aria-label="Volver">${ic('left', 20)}</button><b>Fecha 9 · Liga El Dorado</b><button type="button" class="iconbtn oncolor" aria-label="Más opciones" data-act="toast" data-msg="Más opciones llegan pronto">${ic('more', 20)}</button></div>
+      <div class="mhmu"><div class="mhcol"><button type="button" data-act="team" data-team="${m.home}" aria-label="Ver ${h.name}">${badge(m.home, 'l')}</button><span class="teamname">${h.name}</span></div>
+        <div class="mhtime"><small>${fmtUpper(m)}</small><b class="num">${m.time}</b><span class="status-pill">POR JUGAR</span></div>
+        <div class="mhcol"><button type="button" data-act="team" data-team="${m.away}" aria-label="Ver ${a.name}">${badge(m.away, 'l')}</button><span class="teamname">${a.name}</span></div></div></div>`;
+    let body;
+    if (tab === 0) {
+      const g = headToHead(m); let w = 0, d = 0, l = 0, gh = 0, ga = 0;
+      const rows = g.map(([date, comp, lh, sh, sa, la]) => { const hs = lh === m.home ? sh : sa, as = lh === m.home ? sa : sh; gh += hs; ga += as; const res = hs > as ? 'G' : hs === as ? 'E' : 'P'; res === 'G' ? w++ : res === 'E' ? d++ : l++;
+        return `<div class="h2h"><div class="d"><b>${date}</b><span>${comp}</span></div><div class="score"><span>${TEAMS[lh].short}</span>${badge(lh)}<b class="num">${sh} - ${sa}</b>${badge(la)}<span>${TEAMS[la].short}</span></div><span class="res ${res}">${res}</span></div>`; }).join('');
+      body = `<div class="ctacard"><div class="row"><span class="icontile">${ic('ticket', 20)}</span><div><b style="display:block;font-size:13px;font-weight:600">Boletas disponibles</b><span style="font-size:11px;color:var(--text-2)">Desde ${money(25000)} · Quedan pocas en Oriental</span></div></div>
+          <button type="button" class="btn primary block" data-act="buy" data-id="${m.id}">${ic('ticket', 16)}Comprar boleta</button></div>
+        <div class="section">${secHead('ÚLTIMOS 5 ENFRENTAMIENTOS')}
+          <div class="balance"><div class="statrow"><div class="stat hl"><small>${h.name}</small><b class="num">${w}</b></div><div class="stat"><small>Empates</small><b class="num">${d}</b></div><div class="stat"><small>${a.name}</small><b class="num">${l}</b></div></div>
+            <div class="splitbar">${w ? `<i style="flex:${w};background:${h.color}"></i>` : ''}${d ? `<i style="flex:${d};background:var(--line-strong)"></i>` : ''}${l ? `<i style="flex:${l};background:${a.color}"></i>` : ''}</div>
+            <div class="row between" style="font-size:11px;color:var(--text-2)"><span class="num">${gh} goles</span><span class="num">${ga} goles</span></div></div>
+          <div class="card">${rows}</div><p class="caption">Resultados desde la perspectiva de ${h.name}.</p></div>
+        <div class="section">${secHead('DETALLES DEL PARTIDO')}${infoCard([['Fecha', fmtLong(m)], ['Hora', m.time], ['Estadio', m.venue + (m.venue.includes('·') ? '' : ' · ' + h.city)], ['Transmisión TV', 'Win Sports+'], ['En vivo', 'App Liga El Dorado'], ['Árbitro', REFS[Math.floor(rng('ref' + m.id)() * REFS.length)]]])}</div>`;
+    } else {
+      const p = pitchHTML(m);
+      const absBlock = k => { const list = absences(k); const ind = { exp: ['var(--err-bg)', '<span class="redcard"></span>', 't-exp', 'EXPULSADO'], les: ['var(--warn-bg)', '<span style="color:var(--warn-text)">+</span>', 't-les', 'LESIONADO'], dud: ['var(--info-bg)', '<span style="color:var(--info-text)">?</span>', 't-dud', 'DUDA'] };
+        return `<div class="section" style="gap:8px"><div class="row" style="gap:8px">${badge(k)}<b style="font-size:13px;font-weight:600">${TEAMS[k].name}</b></div><div class="card">${list.map(([t, n, det]) => `<div class="absence"><span class="ind" style="background:${ind[t][0]}">${ind[t][1]}</span><div class="who"><b>${n}</b><span>${det}</span></div><span class="state ${ind[t][2]}">${ind[t][3]}</span></div>`).join('')}</div></div>`; };
+      body = `<div class="section">${secHead('ALINEACIONES PROBABLES')}
+          <div class="formations"><span class="formation"><i style="background:${a.color}"></i>${a.name}<em>${p.A.f}</em></span><span class="formation"><i style="background:${h.color}"></i>${h.name}<em>${p.H.f}</em></span></div>
+          ${p.html}${infoCard([['DT ' + a.name, a.dt], ['DT ' + h.name, h.dt]])}</div>
+        <div class="section">${secHead('EXPULSADOS Y LESIONADOS')}${absBlock(m.home)}${absBlock(m.away)}</div>`;
+    }
+    return `${statusBar(true, 'var(--inverse)')}<div class="scroll">${hero}${tabs(['Resumen', 'Alineaciones'], tab, 'matchtab')}<div class="content">${body}</div></div>${bottomNav('home')}`;
+  }
+  function scrSelect() {
+    const b = state.buy, m = MATCHES[b.matchId], z = ZONES.find(x => x.id === b.zone);
+    return `${statusBar()}${innerBar('Comprar boletas')}
+      <div class="scroll"><div class="content" style="padding-top:8px;gap:20px">${steps(1, 'Boletas')}${nextCard(m, false)}
+        <div class="section" style="gap:10px">${secHead('ELIGE TU ZONA', 'Ver mapa')}
+          <div role="radiogroup" aria-label="Zona" style="display:flex;flex-direction:column;gap:10px">${ZONES.map(x => x.soldOut
+            ? `<div class="zone" aria-disabled="true" role="radio" aria-checked="false"><span class="sw" style="background:var(--line-strong)"></span><div class="z"><b>${x.name}</b><span>${x.desc}</span></div><div class="p"><b style="color:var(--err-text)">Agotado</b></div></div>`
+            : `<button type="button" class="zone" role="radio" aria-checked="${x.id === b.zone}" data-act="zone" data-z="${x.id}"><span class="sw" style="background:${x.color}"></span><div class="z"><b>${x.name}</b><span>${x.desc}</span></div><div class="p"><b class="num">${money(x.price)}</b><span>por boleta</span></div><span class="radio"></span></button>`).join('')}</div></div>
+        <div class="qty"><div><b>Cantidad de boletas</b><span>Máximo 6 por compra</span></div>
+          <div class="stepper"><button type="button" data-act="qty" data-d="-1" aria-label="Quitar una boleta" ${b.qty <= 1 ? 'disabled' : ''}>${ic('minus', 18)}</button><output class="num" aria-live="polite">${b.qty}</output><button type="button" class="plus" data-act="qty" data-d="1" aria-label="Agregar una boleta" ${b.qty >= 6 ? 'disabled' : ''}>${ic('plus', 18)}</button></div></div>
+      </div></div>
+      <div class="checkout"><div><small>Total · ${b.qty} ${b.qty > 1 ? 'boletas' : 'boleta'}</small><strong class="num">${money(z.price * b.qty)}</strong></div><button type="button" class="btn primary" data-act="toPay">Continuar</button></div>`;
+  }
+  function field(id, label, value, opts = {}) {
+    const err = state.buy.errors[id];
+    return `<div class="field ${err ? 'error' : ''}"><label for="f-${id}">${label}</label><input id="f-${id}" data-field="${id}" value="${value}" ${opts.ph ? `placeholder="${opts.ph}"` : ''} ${opts.mode ? `inputmode="${opts.mode}"` : ''} ${opts.type ? `type="${opts.type}"` : ''} autocomplete="off">${err ? `<span class="err">${err}</span>` : ''}</div>`;
+  }
+  function scrPay() {
+    const b = state.buy, m = MATCHES[b.matchId], z = ZONES.find(x => x.id === b.zone), f = b.form;
+    const sub = z.price * b.qty, fee = FEE * b.qty, total = sub + fee;
+    const methods = [['card', 'card', 'Tarjeta crédito / débito', 'Visa, Mastercard, Amex'], ['pse', 'bank', 'PSE', 'Débito desde tu cuenta bancaria'], ['nequi', 'phone', 'Nequi', 'Paga desde tu celular']];
+    let extra = '';
+    if (b.method === 'card') extra = `${field('cardNum', 'Número de tarjeta', f.cardNum, { mode: 'numeric' })}<div class="row" style="gap:12px;align-items:flex-start">${field('exp', 'Vencimiento', f.exp, { ph: 'MM / AA' })}${field('cvv', 'CVV', f.cvv, { ph: '123', mode: 'numeric' })}</div>${field('holder', 'Nombre en la tarjeta', f.holder)}`;
+    if (b.method === 'nequi') extra = field('phone', 'Número de celular Nequi', f.phone, { mode: 'tel' });
+    if (b.method === 'pse') extra = `<div class="field"><label for="f-bank">Banco</label><select id="f-bank" data-field="bank">${['Bancolombia', 'Davivienda', 'Banco de Bogotá', 'BBVA', 'Nu Colombia'].map(x => `<option ${x === f.bank ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`;
+    return `${statusBar()}${innerBar('Datos y pago')}
+      <div class="scroll"><div class="content" style="padding-top:8px">${steps(2, 'Pago')}
+        <div class="section">${secHead('RESUMEN DE COMPRA')}
+          <div class="card">${[['Partido', `${TEAMS[m.home].name} vs ${TEAMS[m.away].name}`], ['Fecha', `${fmtShort(m)} · ${m.time}`], ['Zona', `${z.name.split(' ·')[0]} · Puerta ${z.gate}`], ['Boletas', `${b.qty} × ${money(z.price)}`], ['Cargo por servicio', money(fee)]].map(([k, v]) => `<div class="inforow"><span>${k}</span><b class="num">${v}</b></div>`).join('')}<div class="inforow total"><span>Total</span><b class="num">${money(total)}</b></div></div></div>
+        <form class="section" id="payform" novalidate>${secHead('DATOS DEL COMPRADOR')}<div class="fields">
+          ${field('name', 'Nombre completo', f.name)}${field('doc', 'Número de cédula', f.doc, { mode: 'numeric' })}${field('email', 'Correo electrónico', f.email, { type: 'email' })}</div>
+          ${secHead('MÉTODO DE PAGO')}
+          <div role="radiogroup" aria-label="Método de pago" style="display:flex;flex-direction:column;gap:10px">${methods.map(([id, icon, n, d]) => `<button type="button" class="method" role="radio" aria-checked="${b.method === id}" data-act="method" data-m="${id}"><span class="icontile">${ic(icon, 20)}</span><div class="z"><b>${n}</b><span>${d}</span></div><span class="radio"></span></button>`).join('')}</div>
+          <div class="fields">${extra}</div></form>
+        <div class="secure">${ic('lock', 14)}Pago seguro y encriptado · Tus datos están protegidos</div>
+      </div></div>
+      <div class="checkout"><div><small>Total a pagar</small><strong class="num">${money(total)}</strong></div><button type="button" class="btn primary" data-act="pay">${ic('lock', 16)}Pagar</button></div>`;
+  }
+  function scrConfirm() {
+    const b = state.buy, m = MATCHES[b.matchId], z = ZONES.find(x => x.id === b.zone);
+    return `${statusBar(false, 'var(--bg-2)')}
+      <div class="scroll" style="background:var(--bg-2)"><div class="content" style="padding-top:24px;gap:20px">
+        <div class="success">${ic('check', 36)}</div>
+        <div style="text-align:center;display:flex;flex-direction:column;gap:6px"><h1 style="margin:0;font-size:24px;font-weight:900">¡Compra exitosa!</h1>
+          <p class="para">Enviamos ${b.qty > 1 ? `tus ${b.qty} boletas` : 'tu boleta'} a ${b.form.email}. También las encuentras en "Mis boletas".</p></div>
+        <div class="ticket"><div class="head"><div class="k"><span>LIGA EL DORADO · FECHA 9</span><span>${b.qty} ${b.qty > 1 ? 'BOLETAS' : 'BOLETA'}</span></div>
+            <div class="mu"><span class="t">${badge(m.home)}${TEAMS[m.home].name}</span><span style="font-weight:600">VS</span><span class="t">${TEAMS[m.away].name}${badge(m.away)}</span></div>
+            <span style="font-size:11px">${fmtLong(m)} · ${m.time} · ${m.venue.split(' ·')[0]}</span></div>
+          <div class="perf"><i></i><i></i></div>
+          <div class="body"><canvas id="qr" width="21" height="21" aria-label="Código QR de ingreso"></canvas>
+            <dl><div><dt>Zona</dt><dd>${z.name}</dd></div><div><dt>Puerta</dt><dd class="num">${z.gate}</dd></div><div><dt>Titular</dt><dd>${b.form.name}</dd></div><div><dt>Orden</dt><dd class="num">${b.order}</dd></div></dl></div></div>
+        <p class="caption" style="text-align:center">Presenta el código QR en la puerta de ingreso. Llega 1 hora antes.</p>
+        <div style="display:flex;flex-direction:column;gap:10px"><button type="button" class="btn primary block" data-act="toast" data-msg="Mis boletas llega pronto">${ic('ticket', 16)}Ver mis boletas</button>
+          <button type="button" class="btn secondary block" data-act="nav" data-to="home">${ic('home', 16)}Volver al inicio</button></div>
+      </div></div>`;
+  }
+  function scrEmpty(kind) {
+    const c = kind === 'following'
+      ? { title: 'Siguiendo', icon: 'star', h: 'Aún no sigues equipos', p: 'Sigue a tus equipos favoritos para ver aquí sus partidos, resultados y noticias.', cta: '<button type="button" class="btn secondary" data-act="nav" data-to="home">Explorar equipos</button>' }
+      : { title: 'Perfil', icon: 'user', h: 'Tu perfil está en construcción', p: 'Muy pronto podrás ver tus boletas, tus datos y tus preferencias desde aquí.', cta: '' };
+    return `${statusBar()}<h1 class="pagetitle">${c.title}</h1><div class="emptystate"><span class="ill">${ic(c.icon, 36)}</span><h2>${c.h}</h2><p class="para" style="max-width:300px">${c.p}</p>${c.cta}</div>${bottomNav(kind)}`;
+  }
+
+  /* ---------------- Render ---------------- */
+  function drawQR(seed) {
+    const cv = document.getElementById('qr'); if (!cv) return; const x = cv.getContext('2d'); const N = 21; const r = rng(seed);
+    x.fillStyle = '#fff'; x.fillRect(0, 0, N, N); x.fillStyle = '#0C0A09';
+    const finders = [[0, 0], [N - 7, 0], [0, N - 7]];
+    for (let yy = 0; yy < N; yy++) for (let xx = 0; xx < N; xx++) {
+      const f = finders.find(([fx, fy]) => xx >= fx && xx < fx + 7 && yy >= fy && yy < fy + 7); let on;
+      if (f) { const dx = xx - f[0], dy = yy - f[1]; on = dx === 0 || dx === 6 || dy === 0 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4); }
+      else if (finders.some(([fx, fy]) => xx >= fx - 1 && xx <= fx + 7 && yy >= fy - 1 && yy <= fy + 7)) on = false;
+      else on = r() > .52;
+      if (on) x.fillRect(xx, yy, 1, 1);
+    }
+  }
+  function render(anim) {
+    const r = cur(); let html = '';
+    if (r.screen === 'home') html = scrHome();
+    else if (r.screen === 'team') html = scrTeam(r);
+    else if (r.screen === 'match') html = scrMatch(r);
+    else if (r.screen === 'select') html = scrSelect();
+    else if (r.screen === 'pay') html = scrPay();
+    else if (r.screen === 'confirm') html = scrConfirm();
+    else html = scrEmpty(r.screen);
+    const keepScroll = anim === 'none' ? device.querySelector('.scroll')?.scrollTop : 0;
+    device.innerHTML = `<section class="screen ${anim && anim !== 'none' ? anim : ''}">${html}${state.toast ? `<div class="toast" role="status">${state.toast}</div>` : ''}</section>`;
+    const sc = device.querySelector('.scroll'); if (sc && keepScroll) sc.scrollTop = keepScroll;
+    if (r.screen === 'confirm') drawQR(state.buy.order);
+  }
+  let toastTimer;
+  function toast(msg) { state.toast = msg; render('none'); clearTimeout(toastTimer); toastTimer = setTimeout(() => { state.toast = null; render('none'); }, 1800); }
+
+  function validate() {
+    const b = state.buy, f = b.form, e = {};
+    if (!f.name.trim()) e.name = 'Escribe tu nombre completo.';
+    if (f.doc.replace(/\D/g, '').length < 6) e.doc = 'Escribe un número de cédula válido.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = 'Escribe un correo con el formato nombre@dominio.com.';
+    if (b.method === 'card') {
+      if (f.cardNum.replace(/\D/g, '').length < 15) e.cardNum = 'El número de tarjeta debe tener 15 o 16 dígitos.';
+      if (!/^\s*\d{2}\s*\/\s*\d{2}\s*$/.test(f.exp)) e.exp = 'Usa el formato MM / AA.';
+      if (!/^\d{3,4}$/.test(f.cvv.trim())) e.cvv = 'Escribe los 3 dígitos del reverso.';
+      if (!f.holder.trim()) e.holder = 'Escribe el nombre como aparece en la tarjeta.';
+    }
+    if (b.method === 'nequi' && f.phone.replace(/\D/g, '').length !== 10) e.phone = 'El celular debe tener 10 dígitos.';
+    b.errors = e; return !Object.keys(e).length;
+  }
+
+  device.addEventListener('input', ev => { const k = ev.target.dataset.field; if (k && state.buy) { state.buy.form[k] = ev.target.value; if (state.buy.errors[k]) { delete state.buy.errors[k]; ev.target.closest('.field')?.classList.remove('error'); ev.target.parentElement.querySelector('.err')?.remove(); } } });
+  device.addEventListener('change', ev => { const k = ev.target.dataset.field; if (k && state.buy) state.buy.form[k] = ev.target.value; });
+  device.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches('[role="button"][data-act]')) { ev.preventDefault(); ev.target.click(); } });
+  device.addEventListener('submit', ev => ev.preventDefault());
+  device.addEventListener('click', ev => {
+    const el = ev.target.closest('[data-act]'); if (!el || !device.contains(el)) return;
+    const a = el.dataset.act, r = cur();
+    switch (a) {
+      case 'back': back(); break;
+      case 'nav': { const to = el.dataset.to; if (to !== r.screen || state.stack.length > 1) root({ screen: to }); break; }
+      case 'match': go({ screen: 'match', id: el.dataset.id, tab: 0 }); break;
+      case 'team': go({ screen: 'team', team: el.dataset.team, tab: 0 }); break;
+      case 'teamtab': r.tab = +el.dataset.i; r.filter = 'Todos'; render('none'); device.querySelector('.scroll').scrollTop = device.querySelector('.tabs').offsetTop - 60; break;
+      case 'matchtab': r.tab = +el.dataset.i; render('none'); device.querySelector('.scroll').scrollTop = device.querySelector('.tabs').offsetTop - 60; break;
+      case 'filter': r.filter = el.dataset.f; render('none'); break;
+      case 'follow': { const k = el.dataset.team; state.following[k] = !state.following[k]; render('none'); break; }
+      case 'day': state.tabHome = +el.dataset.i; render('none'); break;
+      case 'buy': startBuy(el.dataset.id); break;
+      case 'zone': state.buy.zone = el.dataset.z; render('none'); break;
+      case 'qty': state.buy.qty = Math.min(6, Math.max(1, state.buy.qty + +el.dataset.d)); render('none'); break;
+      case 'toPay': go({ screen: 'pay' }); break;
+      case 'method': state.buy.method = el.dataset.m; state.buy.errors = {}; render('none'); break;
+      case 'pay':
+        if (validate()) { state.buy.order = '#LD-' + (40000 + Math.floor(Math.random() * 9999)); go({ screen: 'confirm' }); }
+        else { render('none'); const first = device.querySelector('.field.error input'); if (first) { first.focus(); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
+        break;
+      case 'toast': toast(el.dataset.msg); break;
+    }
+  });
+  document.querySelector('.jump').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-jump]'); if (!b) return; const j = b.dataset.jump;
+    if (j === 'home' || j === 'following' || j === 'profile') root({ screen: j });
+    else if (j === 'match') { state.stack = [{ screen: 'home' }]; go({ screen: 'match', id: 'm1', tab: 0 }); }
+    else if (j === 'team') { state.stack = [{ screen: 'home' }]; go({ screen: 'team', team: 'SU', tab: 0 }); }
+    else if (j === 'buy') { const m = upcomingFor('SU')[0]; state.stack = [{ screen: 'home' }, { screen: 'team', team: 'SU', tab: 1 }]; startBuy(m.id); }
+  });
+  render('fade');
+})();
+</script>
