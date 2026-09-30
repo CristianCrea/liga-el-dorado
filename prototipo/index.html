@@ -79,7 +79,7 @@
   .jump button:hover { border-color: var(--line-strong); }
 
   .device {
-    position: relative; width: 390px; height: min(844px, calc(100vh - 48px)); min-height: 640px;
+    position: relative; width: 390px; height: min(844px, calc(100vh - 48px)); min-height: 768px;
     background: var(--bg); border-radius: 46px; overflow: hidden; flex-shrink: 0;
     box-shadow: 0 0 0 10px #1C1917, 0 0 0 11px #44403C, 0 30px 60px rgba(12,10,9,.25);
   }
@@ -517,6 +517,9 @@
   };
   const cur = () => state.stack[state.stack.length - 1];
   const device = document.getElementById('device');
+  // En computador, reduce el teléfono (768 px de alto mínimo) para que quepa en la ventana sin scroll.
+  const fitDevice = () => { device.style.zoom = matchMedia('(max-width: 500px)').matches ? '' : Math.min(1, (innerHeight - 48) / 768); };
+  addEventListener('resize', fitDevice); fitDevice();
   function go(route, anim = 'push') { state.stack.push(route); render(anim); }
   function back() { if (state.stack.length > 1) { state.stack.pop(); render('pop'); } }
   function root(route) { state.stack = [route]; render('fade'); }
